@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1792265828104,
+      "tag": "0000_lush_legion",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792266087438,
+      "tag": "0001_thin_mantis",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792266487665,
+      "tag": "0002_open_gateway",
+      "breakpoints": true
+    }
+  ]
+}

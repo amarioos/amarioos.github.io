@@ -1,0 +1,53 @@
+name: Landing Studio — publish product pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/landing-studio.yml'
+      - 'scripts/landing-studio-publish.py'
+  workflow_dispatch:
+  schedule:
+    - cron: '3-58/5 * * * *'
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  models: read
+concurrency:
+  group: landing-studio-publisher
+  cancel-in-progress: false
+jobs:
+  publish:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Prepare requested landing pages
+        id: sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/landing-studio-publish.py
+      - name: Configure GitHub Pages
+        if: steps.sync.outputs.pending == 'true'
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload public website
+        if: steps.sync.outputs.pending == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Publish public website
+        if: steps.sync.outputs.pending == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Confirm publication and run live smoke test
+        if: always() && steps.sync.outputs.pending == 'true'
+        env:
+          DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
+        run: python3 scripts/landing-studio-publish.py finish

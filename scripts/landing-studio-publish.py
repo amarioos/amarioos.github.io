@@ -34,7 +34,7 @@ def enhance(job):
     except urllib.error.HTTPError as e:
         if e.code in (401,403):raise ValueError('GitHub Models refuse cet accès. Activez GitHub Models pour le dépôt, puis relancez. La génération par modèles reste disponible.')
         if e.code==429:raise ValueError('Quota GitHub Models atteint. Réessayez plus tard. Aucun nouveau texte n’a été appliqué.')
-        raise ValueError('Le service IA est temporairement indisponible.')
+        raise ValueError('Le service IA est temporairement indisponible (HTTP '+str(e.code)+').')
     data=json.loads(result['choices'][0]['message']['content'])
     if not isinstance(data.get('features'),list) or len(data['features'])<1 or not data.get('headline'):raise ValueError('Réponse IA incomplète. Relancez la génération.')
     # Normalize Eastern/extended Arabic digits without touching product words.
@@ -45,13 +45,14 @@ def enhance(job):
 def sync():
     run='https://github.com/'+REPO+'/actions/runs/'+os.environ['GITHUB_RUN_ID']
     call('heartbeat',{'run':run})
-    call('bootstrap',{})
+    boot=call('bootstrap',{})
+    if boot.get('aiError'):log('Stored demo AI status: '+str(boot.get('aiStatus'))+' — '+str(boot['aiError'])[:700])
     jobs=call('queue');published=[]
     for job in jobs.get('ai',[]):
         safe_id(job['id'])
         try:enhance(job);log('AI copy prepared for '+job['id'])
         except Exception as e:
-            log('AI job failed without changing product data: '+job['id'])
+            log('AI job failed without changing product data: '+job['id']+' — '+str(e)[:700])
             call('ai',{'id':job['id'],'revision':job['revision'],'ok':False,'error':str(e)[:700]})
     for job in jobs.get('publish',[]):
         safe_id(job['id'])
