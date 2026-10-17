@@ -6,7 +6,7 @@ Application multi-utilisateur de création de landing pages produit. Interface h
 1. Connexion avec ChatGPT, projets isolés par utilisateur.
 2. Photo JPEG/PNG/WebP optimisée côté navigateur, nom, description, langue.
 3. Styles Conversion / Éditorial / Premium, couleurs, prix, marque et contact.
-4. Génération structurée immédiate et retouche manuelle ; amélioration facultative via GitHub Models (requiert accès et quota).
+4. Génération structurée immédiate et retouche manuelle ; amélioration facultative via une connexion API OpenAI configurée par l’administrateur.
 5. Aperçu mobile/desktop ; les essais sont séparés des commandes réelles.
 6. Publication publique explicite vers /generated/<UUID>/index.html sur GitHub Pages.
 7. Commandes persistantes, statuts, CSV, visites, scroll, funnel, abandons et carte de clics.
@@ -28,7 +28,8 @@ Français, anglais, darija et arabe saoudien. Le moteur immédiat structure les 
 Le premier passage crée une page DogWalk de démonstration pour valider le flux. Une commande synthétique est ensuite enregistrée via le même endpoint public puis isolée dans les données de test.
 
 ## IA
-Le workflow utilise le modèle openai/gpt-4.1-mini via GitHub Models avec models:read. Aucun abonnement payant n'est activé par ce projet. L'accès et les quotas du compte restent applicables ; un refus ou quota épuisé remonte une erreur visible, sans remplacer le contenu par un faux résultat IA.
+La génération par modèles est immédiate et ne nécessite aucune API. La reformulation et la traduction avancées utilisent une connexion API OpenAI optionnelle : variables serveur OPENAI_API_KEY (secret) et OPENAI_MODEL. Aucune clé n’est fournie, aucun abonnement ni paiement n’est activé. La connexion doit être configurée via OpenAI Developers. Sans connexion, le bouton IA est désactivé avec un message clair.
+La voie préparée utilise l’API Responses et un schéma JSON strict. Aucun appel réel à OpenAI n’a été effectué lors de la livraison faute de connexion API. GitHub Models a été retiré de l’implémentation, ce service étant arrêté depuis le 30 juillet 2026.
 
 ## Analytics et pixels
 Mesures first-party sans valeurs de champs dans les clics. Sessions par onglet, visiteurs par identifiant navigateur. Abandon après 30 minutes sans activité. Pixels Meta/TikTok/GA4 via identifiants validés, chargés après consentement publicitaire. Envoi Lead/SubmitForm/generate_lead uniquement après succès du stockage. Les aperçus ne chargent pas les pixels.

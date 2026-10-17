@@ -12,7 +12,6 @@ permissions:
   contents: write
   pages: write
   id-token: write
-  models: read
 concurrency:
   group: landing-studio-publisher
   cancel-in-progress: false
@@ -29,8 +28,6 @@ jobs:
           fetch-depth: 1
       - name: Prepare requested landing pages
         id: sync
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: python3 scripts/landing-studio-publish.py
       - name: Configure GitHub Pages
         if: steps.sync.outputs.pending == 'true'

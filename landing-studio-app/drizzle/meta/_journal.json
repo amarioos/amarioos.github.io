@@ -22,6 +22,13 @@
       "when": 1792266487665,
       "tag": "0002_open_gateway",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792267380081,
+      "tag": "0003_workable_doctor_octopus",
+      "breakpoints": true
     }
   ]
 }
