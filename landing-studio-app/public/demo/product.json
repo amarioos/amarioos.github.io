@@ -1,0 +1,75 @@
+{
+  "name": "DogWalk — Démo du générateur",
+  "description": "Bouteille portable pour les promenades avec votre chien.\nRéservoir d’eau avec abreuvoir intégré.\nCompartiment pour la nourriture sèche et les friandises.\nDistributeur de sacs de propreté intégré.",
+  "language": "fr",
+  "country": "MA",
+  "style": "conversion",
+  "color": "#068e99",
+  "brand": "DogWalk Maroc",
+  "image": "f35ba26c-5b1c-4fd1-b3c3-224d02e19ca9.webp",
+  "audience": "mixed",
+  "age": "25-34",
+  "visualBrief": "Des promenades au Maroc, une lumière naturelle et une relation complice avec le chien.",
+  "headline": "Une belle balade commence avec les bons essentiels.",
+  "subtitle": "De l’eau, des friandises et des sacs de propreté à portée de main. Une gourde portable pour accompagner les sorties avec votre chien.",
+  "features": [
+    "Un réservoir d’eau et un abreuvoir intégrés pour les pauses pendant la promenade.",
+    "Un compartiment pour emporter de la nourriture sèche ou quelques friandises.",
+    "Un distributeur de sacs de propreté pour garder les essentiels ensemble."
+  ],
+  "detailText": "Une promenade, un arrêt au parc ou une sortie plus longue : gardez les essentiels de votre chien réunis dans une bouteille portable.\n\nLe réservoir et l’abreuvoir permettent de proposer de l’eau pendant vos pauses. Le compartiment dédié accueille la nourriture sèche et les friandises. Les sacs de propreté restent accessibles grâce au distributeur intégré.\n\nVérifiez les instructions du fabricant avant la première utilisation. La disponibilité et les détails de votre commande sont confirmés lors de notre échange.",
+  "cta": "Je réserve ma gourde",
+  "useCases": [
+    {
+      "title": "Pour les balades du quotidien",
+      "text": "Emportez de l’eau et gardez l’abreuvoir à portée de main quand vous faites une pause avec votre chien."
+    },
+    {
+      "title": "Pour les pauses au parc",
+      "text": "Glissez quelques friandises dans le compartiment dédié avant de profiter de votre sortie ensemble."
+    },
+    {
+      "title": "Pour les sorties plus longues",
+      "text": "Regroupez eau, nourriture sèche et sacs de propreté dans une bouteille portable, à préparer avant le départ."
+    }
+  ],
+  "usage": [],
+  "faqs": [
+    {
+      "q": "Comment réserver ma gourde ?",
+      "a": "Complétez le formulaire en bas de page. Nous vous contactons pour confirmer la disponibilité et les détails avant validation."
+    },
+    {
+      "q": "Que permet de transporter cette bouteille ?",
+      "a": "Elle réunit un réservoir d’eau avec abreuvoir, un compartiment pour nourriture sèche et friandises, et un distributeur de sacs de propreté."
+    },
+    {
+      "q": "Quel est le prix et quels sont les délais ?",
+      "a": "Le prix, la disponibilité et les modalités de livraison seront confirmés lors de notre échange."
+    },
+    {
+      "q": "Les personnes sur les photos sont-elles des clients ?",
+      "a": "Les photos de mise en situation sont des illustrations créées par intelligence artificielle à partir du produit. Elles ne représentent pas des témoignages clients."
+    }
+  ],
+  "visuals": [
+    {
+      "image": "86a3c3fa-5153-4c6b-a389-29c40a785c32.webp",
+      "kind": "lifestyle",
+      "caption": "Une pause fraîcheur pendant la promenade.",
+      "generated": true
+    },
+    {
+      "image": "b6c89414-3c2f-4caf-af32-f8a46b0d8071.webp",
+      "kind": "detail",
+      "caption": "Vos essentiels réunis, jusque dans les détails.",
+      "generated": true
+    },
+    {
+      "image": "766ea247-9db9-4115-952f-0ef2aa59bdcd.webp",
+      "kind": "context",
+      "caption": "Profitez de vos sorties ensemble.",
+      "generated": true
+    }
+  ]
+}

@@ -1,6 +1,6 @@
-import fs from 'node:fs';import ts from 'typescript';import {fileURLToPath} from 'node:url';import os from 'node:os';import path from 'node:path';import assert from 'node:assert/strict';import {DatabaseSync} from 'node:sqlite';
-const root=fileURLToPath(new URL('../',import.meta.url)),out=fs.mkdtempSync(path.join(os.tmpdir(),'landing-studio-test-'));
-for(const name of ['product','render','worker-auth','db','ai']){let s=fs.readFileSync(root+'/lib/'+name+'.ts','utf8').replace("import {env} from 'cloudflare:workers';","const env=globalThis.__studioEnv;").replace("from './product'","from './product.mjs'").replace("from './render'","from './render.mjs'").replace("from './db'","from './db.mjs'");fs.writeFileSync(out+'/'+name+'.mjs',ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText)}
+import fs from 'node:fs';import ts from 'typescript';import {fileURLToPath} from 'node:url';import {tmpdir} from 'node:os';import {join} from 'node:path';import assert from 'node:assert/strict';import {DatabaseSync} from 'node:sqlite';
+const root=fileURLToPath(new URL('../',import.meta.url)).replace(/\/$/,''),out=fs.mkdtempSync(join(tmpdir(),'landing-studio-qa-'));
+for(const name of ['product','render','worker-auth','db','ai','visual']){let s=fs.readFileSync(root+'/lib/'+name+'.ts','utf8').replace("import {env} from 'cloudflare:workers';","const env=globalThis.__studioEnv;").replace("from './product'","from './product.mjs'").replace("from './render'","from './render.mjs'").replace("from './db'","from './db.mjs'").replace("from './visual'","from './visual.mjs'").replace("import('./db')","import('./db.mjs')");fs.writeFileSync(out+'/'+name+'.mjs',ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText)}
 const db=new DatabaseSync(':memory:');for(const n of fs.readdirSync(root+'/drizzle').filter(n=>n.endsWith('.sql')).sort())db.exec(fs.readFileSync(root+'/drizzle/'+n,'utf8'));
 function prepare(sql){let args=[];return {bind(...v){args=v;return this},async first(){return db.prepare(sql).get(...args)||null},async all(){return {results:db.prepare(sql).all(...args)}},async run(){const v=db.prepare(sql).run(...args);return {...v,meta:{changes:Number(v.changes)}}}}}
 const bucket=new Map();globalThis.__studioEnv={ADMIN_EMAIL:'admin@test.local',DB:{prepare,async batch(stmts){db.exec('BEGIN');try{const result=[];for(const s of stmts){result.push(await s.all())}db.exec('COMMIT');return result}catch(e){db.exec('ROLLBACK');throw e}}},BUCKET:{async put(id,b){bucket.set(id,new Uint8Array(b))},async get(id){return bucket.has(id)?{body:bucket.get(id),arrayBuffer:async()=>new Uint8Array(bucket.get(id)).buffer}:null}}};
@@ -34,4 +34,30 @@ const aiResult=await req('ai',{id,revision:1,consent:true});assert.equal(aiResul
 project=(await req('project/'+id,null,'one','GET')).data;assert.equal(project.revision,2);assert.equal(project.ai_status,'ready');assert.equal(project.data.headline,'Une vraie accroche');assert.equal(project.data.image,image);assert.equal(project.data.price,p.price);assert.equal(project.published_revision,1);
 const attack={...p,name:'</title><script>alert(1)</script>',headline:'<img src=x onerror=alert(1)>'};const html=render(attack,id,true);assert.ok(!html.includes('<script>alert(1)</script>'));assert.ok(!html.includes('<img src=x'));
 for(const language of ['fr','en','ar','darija']){const h=render(generate({...p,language}),id,true);assert.ok(h.includes('dir="'+(['ar','darija'].includes(language)?'rtl':'ltr')+'"'))}
+globalThis.__studioEnv.OPENAI_IMAGE_MODEL='test-image';
+const imageFetch=globalThis.fetch;let imageCalls=0;
+globalThis.fetch=async(url,options)=>{if(String(url)==='https://api.openai.com/v1/images/edits'){imageCalls++;const q=JSON.parse(options.body);assert.equal(q.n,1);assert.equal(q.output_format,'webp');assert.ok(q.images[0].image_url.startsWith('data:image/webp;base64,'));assert.match(q.prompt,/strict identity reference/);assert.equal(q.safety_identifier.length,64);return Response.json({data:[{b64_json:fs.readFileSync(root+'/public/sample-product.webp').toString('base64')}]})}return imageFetch(url,options)};
+assert.equal((await req('visual',{id,revision:2,kind:'lifestyle',consent:true},'two')).status,404);
+assert.equal((await req('visual',{id,revision:2,kind:'lifestyle',consent:false})).status,400);
+assert.equal((await req('visual',{id,revision:1,kind:'lifestyle',consent:true})).status,409);
+assert.equal((await req('visual',{id,revision:2,kind:'bad',consent:true})).status,400);
+const creative=await req('visual',{id,revision:2,kind:'lifestyle',consent:true});assert.equal(creative.status,200);assert.equal(imageCalls,1);assert.equal(creative.data.project.revision,3);
+const asset=creative.data.project.data.visuals[0];assert.equal(asset.kind,'lifestyle');assert.equal(asset.generated,true);assert.equal(bucket.has(asset.image),true);
+assert.equal((await req('image/'+asset.image,null,null,'GET')).status,403);
+const foreign=crypto.randomUUID()+'.webp';await prepare('INSERT INTO images(id,owner,type,created) VALUES(?,?,?,?)').bind(foreign,'two','image/webp',Date.now()).run();
+assert.equal((await req('save',{id,revision:3,data:{...creative.data.project.data,visuals:[{...asset,image:foreign}]}})).status,403);
+const withTarget=validate({...creative.data.project.data,audience:'women',age:'25-34',useCases:[{title:'Promenade',text:'Transportez eau et friandises.'}],usage:['Remplissez le réservoir.'],detailText:'Description du produit.'});
+assert.equal(withTarget.audience,'women');assert.equal(withTarget.age,'25-34');assert.equal(validate({...withTarget,audience:'invalid',age:'bad'}).audience,'mixed');
+assert.throws(()=>validate({...withTarget,visuals:[{...asset,image:'https://evil.test/private'}]}));
+const campaign=render(withTarget,id,true);assert.ok(campaign.includes('data-section="lifestyle"'));assert.ok(campaign.includes('data-section="usecases"'));assert.ok(campaign.includes('data-section="usage"'));assert.ok(campaign.includes('Mise en situation générée par IA'));assert.ok(!campaign.includes('test-not-a-real-key'));
+const savedCreative=await req('save',{id,revision:3,data:{...withTarget,visuals:[{...asset,generated:false}]}});assert.equal(savedCreative.status,200);assert.equal(savedCreative.data.project.data.visuals[0].generated,true);
+assert.equal((await req('publish',{id,revision:4,consent:true})).status,200);
+const packed=await req('worker/export/'+id,null,null,'GET',jwt);assert.deepEqual(packed.data.images,[image,asset.image]);assert.equal((await req('image/'+asset.image,null,null,'GET')).status,200);
+const beforeQuota=(await req('project/'+id,null,'one','GET')).data;
+const quotaFetch=globalThis.fetch;
+globalThis.fetch=async(url,opts)=>String(url).startsWith('https://api.openai.com/')?Response.json({error:{type:'insufficient_quota',code:'credit_balance_exhausted'}},{status:429}):quotaFetch(url,opts);
+const quotaResult=await req('visual',{id,revision:4,kind:'detail',consent:true});assert.equal(quotaResult.status,503);assert.match(quotaResult.data.error,/crédit API/);
+const afterQuota=(await req('project/'+id,null,'one','GET')).data;assert.equal(afterQuota.revision,beforeQuota.revision);assert.deepEqual(afterQuota.data.visuals,beforeQuota.data.visuals);
+const copyQuota=await req('ai',{id,revision:4,consent:true});assert.equal(copyQuota.status,503);assert.match(copyQuota.data.error,/crédit API/);
+console.log('PASS: audience and age validation, image-generation consent and ownership, image privacy and provenance, complete campaign rendering and multi-image publication.');
 console.log('PASS: tenant isolation, auth, image privacy, optimistic locking, publish consent, OIDC signature/claims, page generation/escaping, order validation/idempotency/storage, analytics, test isolation, AI revision and language layout.');

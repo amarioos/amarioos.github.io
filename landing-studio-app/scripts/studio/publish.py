@@ -33,15 +33,23 @@ def sync():
             export=call('export/'+job['id']);html=export['html']
             if hashlib.sha256(html.encode()).hexdigest()!=export['hash']:raise ValueError('Export hash mismatch')
             if export['revision']!=job['revision']:raise ValueError('Revision changed')
-            image_id=export['image']
-            if not re.fullmatch(r'[a-f0-9-]{36}\.(png|jpg|webp)',image_id):raise ValueError('Image identifier invalid')
-            image=request(BASE+'/api/worker/image/'+image_id,token=oidc());ext=image_id.rsplit('.',1)[1]
-            if len(image)>3000000:raise ValueError('Image too large')
-            folder=pathlib.Path('generated')/job['id'];(folder/'assets').mkdir(parents=True,exist_ok=True)
-            (folder/'assets'/('product.'+ext)).write_bytes(image)
-            html=html.replace(BASE+'/api/image/'+image_id,'assets/product.'+ext)
-            (folder/'index.html').write_text(html,encoding='utf-8')
-            (folder/'publication.json').write_text(json.dumps({'revision':job['revision'],'hash':export['hash']},indent=2))
+            image_ids=export.get('images') or [export['image']]
+            if len(image_ids)>7 or len(set(image_ids))!=len(image_ids):raise ValueError('Invalid image list')
+            stage=STATE/'stage'/job['id']
+            if stage.exists():shutil.rmtree(stage)
+            (stage/'assets').mkdir(parents=True,exist_ok=True)
+            for index,image_id in enumerate(image_ids):
+                if not re.fullmatch(r'[a-f0-9-]{36}\.(png|jpg|webp)',image_id):raise ValueError('Image identifier invalid')
+                image=request(BASE+'/api/worker/image/'+image_id,token=oidc());ext=image_id.rsplit('.',1)[1]
+                if len(image)>3000000:raise ValueError('Image too large')
+                filename=('product' if index==0 else 'visual-'+str(index))+'.'+ext
+                (stage/'assets'/filename).write_bytes(image)
+                html=html.replace(BASE+'/api/image/'+image_id,'assets/'+filename)
+            (stage/'index.html').write_text(html,encoding='utf-8')
+            (stage/'publication.json').write_text(json.dumps({'revision':job['revision'],'hash':export['hash'],'images':len(image_ids)},indent=2))
+            folder=pathlib.Path('generated')/job['id'];folder.parent.mkdir(exist_ok=True)
+            if folder.exists():shutil.rmtree(folder)
+            shutil.move(str(stage),str(folder))
             published.append(job);log('Prepared public landing '+job['id'])
         except Exception as e:
             log('Publication preparation failed: '+job['id']);notify(job,False,str(e)[:700])

@@ -29,6 +29,13 @@
       "when": 1792267380081,
       "tag": "0003_workable_doctor_octopus",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792276894143,
+      "tag": "0004_nice_madelyne_pryor",
+      "breakpoints": true
     }
   ]
 }
